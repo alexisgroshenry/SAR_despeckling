@@ -24,7 +24,7 @@ parser.add_argument('--stride_size', dest='stride_size', type=int, default=128, 
 parser.add_argument('--lr', dest='lr', type=float, default=0.001, help='initial learning rate for adam')
 parser.add_argument('--use_gpu', dest='use_gpu', type=int, default=1, help='gpu flag, 1 for GPU and 0 for CPU')
 parser.add_argument('--phase', dest='phase', default='train', help='train or test')
-parser.add_argument('--pile', dest='pile', default='1', help='size of the pile')  ## SERIES MULTI-TEMPORAL
+parser.add_argument('--pile', dest='pile', type=int, default=1, help='size of the pile')  ## SERIES MULTI-TEMPORAL
 
 
 parser.add_argument('--checkpoint_dir', dest='ckpt_dir', default="./checkpoint",
@@ -47,17 +47,13 @@ args = parser.parse_args()
 
 def denoiser_train(denoiser, lr):
     data = load_train_data()
-    # eval_files = glob(args.eval_set+'*.npy') # Julien
-    # eval_data = load_sar_images(eval_files) # Julien
-    # Sinon on avait pas le pile pris en compte pour l'évaluation
-    eval_data, eval_files = load_sar_images(args.eval_set, args.pile) # Julien   
+    eval_data, eval_files = load_sar_images(args.eval_set, args.pile) 
     denoiser.train(data, eval_data, eval_files, eval_set=args.eval_set, batch_size=args.batch_size,
                    ckpt_dir=args.ckpt_dir, epoch=args.epoch, lr=lr, sample_dir=args.sample_dir, step=0, pat_size=args.patch_size, stride=args.stride_size, eval_every_epoch=2)
     
 
 def denoiser_test(denoiser):
-    test_files = glob(args.test_set + '*.npy')
-    denoiser.test(test_files, test_set=args.test_set, ckpt_dir=args.ckpt_dir, save_dir=args.test_dir)
+    denoiser.test(test_set=args.test_set, ckpt_dir=args.ckpt_dir, save_dir=args.test_dir, pile=args.pile)
 
 
 
@@ -80,7 +76,7 @@ def main(_):
         config.gpu_options.allow_growth = True
 
         with tf.Session(config=config) as sess:
-            model = denoiser(sess, stride=args.stride_size, input_c_dim=int(args.pile))
+            model = denoiser(sess, stride=args.stride_size, input_c_dim=args.pile)
             if args.phase == 'train':
                 denoiser_train(model, lr=lr)
             elif args.phase == 'test':
