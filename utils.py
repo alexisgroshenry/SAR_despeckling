@@ -68,7 +68,8 @@ def load_sar_images(datasetdir, pile): # alexis
     data = []
     eval_files = []
     for name_p in name_pile:
-        files_p = glob(datasetdir+name_p+'*.npy').sort()
+        files_p = glob(datasetdir+name_p+'*.npy')
+        files_p.sort()
         assert pile <= len(files_p), "Not enough images for the pile selected in {}".format(datasetdir+name_p)
         # for now we build a single pile # TO FIX --> consider all pile-uplets makes pile! combinations
         eval_files.append(files_p[:pile]) # eval_files contains lists with all the files in a given pile 
