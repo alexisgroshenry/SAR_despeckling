@@ -51,7 +51,7 @@ class denoiser(object):
         self.loss = self.alpha_noise*(1.0 / batch_size) * tf.reduce_sum( tf.abs(self.X_input[:,:,:,:1] - self.Y[:1]))
 
         if len(self.Y) > 1 :
-            self.loss += self.alpha_chge_map*(1.0 / batch_size) * tf.reduce_sum(tf.abs(self.X_input[:,:,:,1:] - self.X_input[:,:,:,:1].unsqueeze(3) - self.Y[1:]))
+            self.loss += self.alpha_chge_map*(1.0 / batch_size) * tf.reduce_sum(tf.abs(self.X_input[:,:,:,1:] - tf.expand_dims(self.X_input[:,:,:,:1], axis=3) - self.Y[1:]))
 
 ####################################################################    
         self.lr = tf.placeholder(tf.float32, name='learning_rate')
@@ -266,7 +266,7 @@ class denoiser(object):
 
         test_data, test_files = load_sar_images(test_set, pile) # alexis
         for idx in range(len(test_files)): # alexis
-            real_image = test_data[idx].unsqueeze(0).astype(np.float32) # alexis
+            real_image = tf.expand_dims(test_data[idx], axis=0).astype(np.float32) # alexis
             # real_image = load_sar_images(test_files[idx]).astype(np.float32)   # alexis
             stride = 32
             pat_size = 256
