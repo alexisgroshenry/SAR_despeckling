@@ -41,12 +41,11 @@ def load_train_data():
     datasetdir = './data/training/'
     # get the name of the piles for training (files must follow name convention "pilename_blabla.npy") # alexis
     filelist = glob(datasetdir+'*.npy') # alexis
-    name_pile = list(set([file.replace(datasetdir[:-1]+'\\','').split('_')[0] for file in filelist])) # alexis
+    name_pile = list(set([file.replace(datasetdir,'').split('_')[0] for file in filelist])) # alexis
     name_pile.sort() # alexis
     #name_pile = ['lely1', 'lely2', 'lely3', 'limagne1', 'limagne2', 'marais12', 'marais13'
     #name_pile = ['lely1', 'marais12', 'marais13'] 
     #name_pile = ['lely', 'marais1']
-    print(name_pile)
     dataset_train = []
     for name_p in name_pile:
         test = glob(datasetdir+name_p+'*.npy')
@@ -64,7 +63,7 @@ def load_train_data():
 def load_sar_images(datasetdir, pile): # alexis
     # get the name of the piles for evaluation (files must follow name convention "pilename_blabla.npy") # alexis
     filelist = glob(datasetdir+'*.npy') # alexis
-    name_pile = list(set([file.replace(datasetdir[:-1]+'\\').split('_')[0] for file in filelist])) # alexis
+    name_pile = list(set([file.replace(datasetdir,'').split('_')[0] for file in filelist])) # alexis
     name_pile.sort() # alexis
     data = []
     eval_files = []
