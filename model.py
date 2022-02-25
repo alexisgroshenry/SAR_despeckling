@@ -49,6 +49,13 @@ class denoiser(object):
         # sum of L1 losses between all images and the denoised image # alexis
         self.loss = self.alpha*(1.0 / batch_size) * (tf.reduce_sum( tf.abs( self.X_input[:,:,:,:1] - self.Y)) + tf.reduce_sum(tf.abs(self.X_input[:,:,:,1:] - self.X_input[:,:,:,:1].unsqueeze(3) - self.Y[1:]))) # alexis
         
+        # sum of L1 losses between all images and the denoised image # Julien
+        noise_loss = self.alpha*((1.0 / batch_size) * tf.reduce_sum( tf.abs( self.X_input[:,:,:,:1] - self.Y[:,:,:,0]))) # Julien
+        if Y.shape[-1] != 1 : # Julien
+            change_map_loss = (1-self.alpha) * tf.reduce_sum(tf.abs(self.X_input[:,:,:,:1] - self.X_input[:,:,:,1:] - self.Y[:,:,:,1:])) # Julien
+        else : # Julien
+            change_map_loss = 0 # Julien
+        self.loss = noise_loss + change_map_loss # Julien
 
 ####################################################################    
         self.lr = tf.placeholder(tf.float32, name='learning_rate')
