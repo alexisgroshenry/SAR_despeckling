@@ -47,8 +47,10 @@ args = parser.parse_args()
 
 def denoiser_train(denoiser, lr):
     data = load_train_data()
-    eval_files = glob(args.eval_set+'*.npy')
-    eval_data = load_sar_images(eval_files)  
+    # eval_files = glob(args.eval_set+'*.npy') # Julien
+    # eval_data = load_sar_images(eval_files) # Julien
+    # Sinon on avait pas le pile pris en compte pour l'évaluation
+    eval_data, eval_files = load_sar_images(args.eval_set, args.pile) # Julien   
     denoiser.train(data, eval_data, eval_files, eval_set=args.eval_set, batch_size=args.batch_size,
                    ckpt_dir=args.ckpt_dir, epoch=args.epoch, lr=lr, sample_dir=args.sample_dir, step=0, pat_size=args.patch_size, stride=args.stride_size, eval_every_epoch=2)
     

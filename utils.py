@@ -66,15 +66,28 @@ def load_train_data():
     return real_data
 
 
+# Nouvelle fonction load_sar_images # Julien 
+def load_sar_images(folder : str, pile : int): # Julien 
+    pile = int(pile) # Julien 
+    name_pile = ['lely', 'marais1'] # Julien 
+    datasetdir = folder # Julien 
+    eval_files = [] # Julien 
+    data = [] # Julien 
+    for name_p in name_pile: # Julien 
+        test = glob(datasetdir+name_p+'*.npy') # Julien 
+        test.sort() # Julien 
+        assert pile <= len(test), "no enough images for the pile selected in {}".format(datasetdir+name_p) # Julien 
+        im_0 = np.load(test[0]) # Julien 
+        im = np.zeros((1,im_0.shape[0], im_0.shape[1], pile)) # Julien 
+        for i in range(pile): # Julien 
+            im[0,:,:,i] = normalize_sar(np.load(test[i])) # Julien 
+        eval_files.append(test[0]) # Julien 
+        data.append(im) # Julien 
+    return data, eval_files # Julien 
 
 
-
-
-
-
-
-
-def load_sar_images(filelist):
+# J'ai modifié cette fonction pour qu'elle ressemble plus à load_train_data, mais pour l'évaluation
+"""def load_sar_images(filelist):
     if not isinstance(filelist, list):
         im = normalize_sar(np.load(filelist))
         return np.array(im).reshape(1, np.size(im, 0), np.size(im, 1), 1)
@@ -82,7 +95,7 @@ def load_sar_images(filelist):
     for file in filelist:
         im = normalize_sar(np.load(file))
         data.append(np.array(im).reshape(1, np.size(im, 0), np.size(im, 1), 1))
-    return data
+    return data"""
 
 
 
