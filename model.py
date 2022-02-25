@@ -179,11 +179,18 @@ class denoiser(object):
                     stride_shift_y = np.random.randint(low=0, high=int(stride/2))
                     y = np.max((0,y-stride_shift_y))
 
+                    # Commentaires de Julien
+                    # Il prend une image à une date donnée (id_date) # Julien
                     im0 = data[id_pile][1][ x:x + pat_size, y:y + pat_size, id_date]
                     im_channels=im0
+                    # Il la duplique sur les channels de pile mais on veut pas ça, on aimerait des images différentes à chaque fois !! # Julien
                     im_channels = np.expand_dims(im_channels, axis=2) 
-
                     batch_images[i,:,:,:] = im_channels
+
+                    # Une image différente à chaque channel ~ date  # Julien
+                    for date in range(self.input_c_dim) : # pour chaque pile # Julien
+                        im0 = data[id_pile][1][ x:x + pat_size, y:y + pat_size, (id_date + date) % data[id_pile][1].shape[-1]] # image à l'indice id_data + 0 etc # Julien
+                        batch_images[i,:,:,date] = im0 # la date contient une image unique # Julien
 
                 _, loss,_= self.sess.run([self.train_op, self.loss, self.print_op],
                                          feed_dict={self.X_input: batch_images, self.lr: lr[epoch], self.is_training: True})
