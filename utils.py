@@ -39,13 +39,14 @@ def BCrossEntropy(yHat, y):
 def load_train_data():
     
     datasetdir = './data/training/'
-    
+    # get the name of the piles for training (files must follow name convention "pilename_blabla.npy") # alexis
+    filelist = glob(datasetdir+'*.npy') # alexis
+    name_pile = set([file.split('_')[0] for file in filelist]).sort() # alexis
     #name_pile = ['lely1', 'lely2', 'lely3', 'limagne1', 'limagne2', 'marais12', 'marais13'
     #name_pile = ['lely1', 'marais12', 'marais13'] 
-    name_pile = ['lely', 'marais1']
+    #name_pile = ['lely', 'marais1']
 
     dataset_train = []
-    
     for name_p in name_pile:
         test = glob(datasetdir+name_p+'*.npy')
         print(test)
@@ -53,40 +54,31 @@ def load_train_data():
         im_0 = np.load(test[0])
         im = np.zeros((im_0.shape[0], im_0.shape[1], len(test)))
         for i in range(len(test)):
-
             im[:,:,i] = normalize_sar(np.load(test[i]))
-
-
         dataset_train.append((name_p, im))
-
-
     real_data = np.array(dataset_train)
-
-    
     return real_data
 
 
-# Nouvelle fonction load_sar_images # Julien 
-def load_sar_images(folder : str, pile : int): # Julien 
-    pile = int(pile) # Julien 
-    name_pile = ['lely', 'marais1'] # Julien 
-    datasetdir = folder # Julien 
-    eval_files = [] # Julien 
-    data = [] # Julien 
-    for name_p in name_pile: # Julien 
-        test = glob(datasetdir+name_p+'*.npy') # Julien 
-        test.sort() # Julien 
-        assert pile <= len(test), "no enough images for the pile selected in {}".format(datasetdir+name_p) # Julien 
-        im_0 = np.load(test[0]) # Julien 
-        im = np.zeros((1,im_0.shape[0], im_0.shape[1], pile)) # Julien 
-        for i in range(pile): # Julien 
-            im[0,:,:,i] = normalize_sar(np.load(test[i])) # Julien 
-        eval_files.append(test[0]) # Julien 
-        data.append(im) # Julien 
-    return data, eval_files # Julien 
+def load_sar_images(datasetdir, pile): # alexis
+    # get the name of the piles for evaluation (files must follow name convention "pilename_blabla.npy") # alexis
+    filelist = glob(datasetdir+'*.npy') # alexis
+    name_pile = set([file.split('_')[0] for file in filelist]).sort() # alexis
+    data = []
+    eval_files = []
+    for name_p in name_pile:
+        files_p = glob(datasetdir+name_p+'*.npy').sort()
+        assert pile <= len(files_p), "Not enough images for the pile selected in {}".format(datasetdir+name_p)
+        # for now we build a single pile # TO FIX --> consider all pile-uplets makes pile! combinations
+        eval_files.append(files_p[:pile]) # eval_files contains lists with all the files in a given pile 
+        im_ref = np.load(files_p[0])
+        im = np.zeros((1,im_ref.shape[0], im_ref.shape[1], pile))
+        for i in range(pile):
+            im[0,:,:,i] = normalize_sar(np.load(files_p[i]))
+        data.append(im)
+    return data, eval_files
 
 
-# J'ai modifié cette fonction pour qu'elle ressemble plus à load_train_data, mais pour l'évaluation
 """def load_sar_images(filelist):
     if not isinstance(filelist, list):
         im = normalize_sar(np.load(filelist))
