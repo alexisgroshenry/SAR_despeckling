@@ -1,0 +1,79 @@
+import tensorflow.compat.v1 as tf
+import numpy as np
+from utils import *
+
+# Nearest-neighbor upscaling layer.
+def upscale2d(x, factor=2):
+    assert isinstance(factor, int) and factor >= 1
+    if factor == 1:
+        return x
+    with tf.variable_scope('Upscale2D'):
+        s = x.shape
+        x = tf.reshape(x, [-1, s[1], 1, s[2], 1, s[3]])
+        x = tf.tile(x, [1, 1, factor, 1, factor, 1])
+        x = tf.reshape(x, [-1, s[1] * factor, s[2] * factor, s[3]])
+        return x
+
+# regularizer = tf.contrib.layers.l2_regularizer(0.1)
+
+def autoencoder(x, input_c_dim, width=256, height=256, **_kwargs):
+    """if config.get_nb_channels() == 1:
+        x.set_shape([None, 1, height, width])
+    else:
+        x.set_shape([None, 3, height, width])"""
+
+    x.set_shape([None, height, width, input_c_dim]) 
+    
+
+    n = x
+    n = tf.nn.leaky_relu(tf.layers.conv2d(n, 64, 3, padding='same', name='enc_conv0', kernel_regularizer="l2"), alpha=0.1)
+    n = tf.nn.leaky_relu(tf.layers.conv2d(n, 64, 3, padding='same', name='enc_conv1', kernel_regularizer="l2"), alpha=0.1)
+    skips = [n]
+    n = tf.nn.max_pool(n, ksize=[1,2,2,1], strides=[1,2,2,1], padding='SAME')
+    
+
+    n = tf.nn.leaky_relu(tf.layers.conv2d(n, 128, 3, padding='same', name='enc_conv2', kernel_regularizer="l2"), alpha=0.1)
+    n = tf.nn.leaky_relu(tf.layers.conv2d(n, 128, 3, padding='same', name='enc_conv2b', kernel_regularizer="l2"), alpha=0.1)
+    skips.append(n)
+    n = tf.nn.max_pool(n, ksize=[1, 2, 2, 1], strides=[1, 2, 2, 1], padding='SAME')
+    
+
+    n = tf.nn.leaky_relu(tf.layers.conv2d(n, 256, 3, padding='same', name='enc_conv3', kernel_regularizer="l2"), alpha=0.1)
+    n = tf.nn.leaky_relu(tf.layers.conv2d(n, 256, 3, padding='same', name='enc_conv3b', kernel_regularizer="l2"), alpha=0.1)
+    skips.append(n)
+    n = tf.nn.max_pool(n, ksize=[1, 2, 2, 1], strides=[1, 2, 2, 1], padding='SAME')
+
+    n = tf.nn.leaky_relu(tf.layers.conv2d(n, 512, 3, padding='same', name='enc_conv4', kernel_regularizer="l2"), alpha=0.1)
+    n = tf.nn.leaky_relu(tf.layers.conv2d(n, 512, 3, padding='same', name='enc_conv4b', kernel_regularizer="l2"), alpha=0.1)
+    skips.append(n)
+    n = tf.nn.max_pool(n, ksize=[1, 2, 2, 1], strides=[1, 2, 2, 1], padding='SAME')
+
+    n = tf.nn.leaky_relu(tf.layers.conv2d(n, 1024, 3, padding='same', name='enc_conv5', kernel_regularizer="l2"), alpha=0.1)
+    n = tf.nn.leaky_relu(tf.layers.conv2d(n, 1024, 3, padding='same', name='enc_conv5b', kernel_regularizer="l2"), alpha=0.1)
+
+
+    # -----------------------------------------------
+    n = upscale2d(n)
+    n = tf.concat([n, skips.pop()], axis=-1)
+    n = tf.nn.leaky_relu(tf.layers.conv2d(n, 512, 3, padding='same', name='dec_conv5', kernel_regularizer="l2"), alpha=0.1)
+    n = tf.nn.leaky_relu(tf.layers.conv2d(n, 512, 3, padding='same', name='dec_conv5b', kernel_regularizer="l2"), alpha=0.1)
+
+    n = upscale2d(n)
+    n = tf.concat([n, skips.pop()], axis=-1)
+    n = tf.nn.leaky_relu(tf.layers.conv2d(n, 256, 3, padding='same', name='dec_conv4', kernel_regularizer="l2"), alpha=0.1)
+    n = tf.nn.leaky_relu(tf.layers.conv2d(n, 256, 3, padding='same', name='dec_conv4b', kernel_regularizer="l2"), alpha=0.1)
+
+    n = upscale2d(n)
+    n = tf.concat([n, skips.pop()], axis=-1)
+    n = tf.nn.leaky_relu(tf.layers.conv2d(n, 128, 3, padding='same', name='dec_conv3', kernel_regularizer="l2"), alpha=0.1)
+    n = tf.nn.leaky_relu(tf.layers.conv2d(n, 128, 3, padding='same', name='dec_conv3b', kernel_regularizer="l2"), alpha=0.1)
+
+    n = upscale2d(n)
+    n = tf.concat([n, skips.pop()], axis=-1)
+    n = tf.nn.leaky_relu(tf.layers.conv2d(n, 64, 3, padding='same', name='dec_conv2', kernel_regularizer="l2"), alpha=0.1)
+    n = tf.nn.leaky_relu(tf.layers.conv2d(n, 64, 3, padding='same', name='dec_conv2b', kernel_regularizer="l2"), alpha=0.1)
+
+    n = tf.layers.conv2d(n, 1, 1, padding='same', name='dec_conv1', kernel_regularizer="l2")
+
+    return x[:,:,:,:1] - n[:,:,:,:] ###  WITHOUT MAP PREDICTION
+    #return x[:,:,:,:1] - n[:,:,:,:1], n[:,:,:,-1:] ### WITH MAP PREDICTION
