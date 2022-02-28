@@ -44,18 +44,14 @@ class denoiser(object):
         self.Y  = autoencoder(self.X, self.input_c_dim)
 
         # ----- loss -----
-        self.alpha = 1
-        self.loss = self.alpha*((1.0 / batch_size) * tf.reduce_sum( tf.abs( self.X_input[:,:,:,:1] - self.Y)))
+        self.alpha_noise = 1.
+        self.alpha_chge_map = 1.
+        # self.loss = self.alpha*((1.0 / batch_size) * tf.reduce_sum( tf.abs( self.X_input[:,:,:,:1] - self.Y)))
         # sum of L1 losses between all images and the denoised image # alexis
-        self.loss = self.alpha*(1.0 / batch_size) * (tf.reduce_sum( tf.abs( self.X_input[:,:,:,:1] - self.Y)) + tf.reduce_sum(tf.abs(self.X_input[:,:,:,1:] - self.X_input[:,:,:,:1].unsqueeze(3) - self.Y[1:]))) # alexis
-        
-        # sum of L1 losses between all images and the denoised image # Julien
-        noise_loss = self.alpha*((1.0 / batch_size) * tf.reduce_sum( tf.abs( self.X_input[:,:,:,:1] - self.Y[:,:,:,0]))) # Julien
-        if Y.shape[-1] != 1 : # Julien
-            change_map_loss = (1-self.alpha) * tf.reduce_sum(tf.abs(self.X_input[:,:,:,:1] - self.X_input[:,:,:,1:] - self.Y[:,:,:,1:])) # Julien
-        else : # Julien
-            change_map_loss = 0 # Julien
-        self.loss = noise_loss + change_map_loss # Julien
+        self.loss = self.alpha_noise*(1.0 / batch_size) * tf.reduce_sum( tf.abs(self.X_input[:,:,:,:1] - self.Y[:,:,:,:1]))
+
+        if self.Y.shape[3] > 1 :
+            self.loss += self.alpha_chge_map*(1.0 / batch_size) * tf.reduce_sum(tf.abs(self.X_input[:,:,:,1:] - self.Y[:,:,:,:1] - self.Y[:,:,:,1:]))
 
 ####################################################################    
         self.lr = tf.placeholder(tf.float32, name='learning_rate')
@@ -88,14 +84,18 @@ class denoiser(object):
                 [self.Y, self.X],
                 feed_dict={self.X_input: real_image_channels,
                            self.is_training: False})
-            groundtruth = denormalize_sar(real_image[:, :256, :256, :])
-            noisyimage = denormalize_sar(noisy_image[:,:,:,:1])
-            
-            outputimage = denormalize_sar(output_clean_image)
 
-            imagename0 = eval_files[idx].replace(eval_set, "")
-            imagename = imagename0.replace('.npy', '_' + str(iter_num) + '.npy')
-            save_sar_images(outputimage, noisyimage, imagename, sample_dir)
+            # modify evaluate to handle new format of eval_files (list of lists instead of list)
+            for idx_p, file in enumerate(eval_files[idx]): # alexis
+                groundtruth = denormalize_sar(real_image[:, :256, :256, idx_p]) # alexis
+                noisyimage = denormalize_sar(noisy_image[:,:,:,idx_p]) # alexis
+                if idx_p: # alexis
+                    outputimage = denormalize_sar(output_clean_image[:,:,:,0]) + denormalize_sar(output_clean_image[:,:,:,idx_p]) # alexis
+                else: # alexis
+                    outputimage = denormalize_sar(output_clean_image[:,:,:,0]) # alexis
+                imagename0 = file.replace(eval_set, "") # alexis
+                imagename = imagename0.replace('.npy', '_' + str(iter_num) + '.npy') # alexis
+                save_sar_images(outputimage, noisyimage, imagename, sample_dir) # alexis
         print("--- Evaluation ---- Done ---")
         
         
@@ -256,7 +256,7 @@ class denoiser(object):
 
 
 
-    def test(self, test_files, test_set, ckpt_dir, save_dir): 
+    def test(self, test_set, ckpt_dir, save_dir, pile): 
         tf.initialize_all_variables().run()
         assert len(test_files) != 0, 'No testing data!'
         load_model_status, global_step = self.load(ckpt_dir)
@@ -264,8 +264,10 @@ class denoiser(object):
         print(" [*] Load weights SUCCESS...")
         print("[*] start testing...")
 
-        for idx in range(len(test_files)):
-            real_image = load_sar_images(test_files[idx]).astype(np.float32)  
+        test_data, test_files = load_sar_images(test_set, pile) # alexis
+        for idx in range(len(test_files)): # alexis
+            real_image = tf.expand_dims(test_data[idx], axis=0).astype(np.float32) # alexis
+            # real_image = load_sar_images(test_files[idx]).astype(np.float32)   # alexis
             stride = 32
             pat_size = 256
 
@@ -293,19 +295,19 @@ class denoiser(object):
                                                                  feed_dict={self.X_input: real_image[:, x:x + pat_size,
                                                                                      y:y + pat_size, :],
                                                                             self.is_training: False})
-                    output_clean_image[:, x:x + pat_size, y:y + pat_size, :] = output_clean_image[:, x:x + pat_size,
-                                                                               y:y + pat_size, :] + tmp_clean_image
-                    count_image[:, x:x + pat_size, y:y + pat_size, :] = count_image[:, x:x + pat_size, y:y + pat_size,
-                                                                        :] + np.ones((1, pat_size, pat_size, 1))
+                    output_clean_image[:, x:x + pat_size, y:y + pat_size, :] += tmp_clean_image # alexis
+                    # complete the change maps with the reference denoised image
+                    output_clean_image[:, x:x + pat_size, y:y + pat_size, 1:] += tmp_clean_image[:,:,:,1:] # alexis
+                    count_image[:, x:x + pat_size, y:y + pat_size, :] += np.ones((1, pat_size, pat_size, 1)) # alexis
             output_clean_image = output_clean_image / count_image
 
             noisyimage = denormalize_sar(real_image)
             outputimage = denormalize_sar(output_clean_image)
 
-
-
-            imagename = test_files[idx].replace(test_set, "")
-            save_sar_images(outputimage, noisyimage, imagename, save_dir)
+            # handle the new format of test_files
+            for idx_p, file in enumerate(test_files[idx]): # alexis
+                imagename = file.replace(test_set, "") # alexis
+                save_sar_images(outputimage[:,:,:,idx_p], noisyimage[:,:,:,idx_p], imagename, save_dir) # alexis
 
 
         print("--- Done Testing ---")

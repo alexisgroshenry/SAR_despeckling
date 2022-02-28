@@ -80,6 +80,6 @@ def autoencoder(x, input_c_dim, width=256, height=256, **_kwargs):
     if input_c_dim==1:
         ###  WITHOUT MAP PREDICTION
         return x[:,:,:,:1] - n[:,:,:,:]
-    elif input_c_dim==2:
+    else:
         ### WITH MAP PREDICTION
-        return x[:,:,:,:1] - n[:,:,:,0], n[:,:,:,1]
+        return tf.concat( [tf.expand_dims(x[:,:,:,0] - n[:,:,:,0],axis=3), n[:,:,:,1:]], axis=3)
