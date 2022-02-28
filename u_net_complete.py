@@ -73,7 +73,11 @@ def autoencoder(x, input_c_dim, width=256, height=256, **_kwargs):
     n = tf.nn.leaky_relu(tf.layers.conv2d(n, 64, 3, padding='same', name='dec_conv2', kernel_regularizer="l2"), alpha=0.1)
     n = tf.nn.leaky_relu(tf.layers.conv2d(n, 64, 3, padding='same', name='dec_conv2b', kernel_regularizer="l2"), alpha=0.1)
 
-    n = tf.layers.conv2d(n, 1, 1, padding='same', name='dec_conv1', kernel_regularizer="l2")
+    n = tf.layers.conv2d(n, input_c_dim, 1, padding='same', name='dec_conv1', kernel_regularizer="l2")
 
-    return x[:,:,:,:1] - n[:,:,:,:] ###  WITHOUT MAP PREDICTION
-    #return x[:,:,:,:1] - n[:,:,:,:1], n[:,:,:,-1:] ### WITH MAP PREDICTION
+    if input_c_dim==1:
+        ###  WITHOUT MAP PREDICTION
+        return x[:,:,:,:1] - n[:,:,:,:]
+    else:
+        ### WITH MAP PREDICTION
+        return tf.concat( [tf.expand_dims(x[:,:,:,0] - n[:,:,:,0],axis=3), n[:,:,:,1:]], axis=3)
