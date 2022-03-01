@@ -53,7 +53,10 @@ def autoencoder(x, input_c_dim, width=256, height=256, miso=True, **_kwargs):
 
 
     # -----------------------------------------------
+    print(n.shape)
     n = upscale2d(n)
+    print(n.shape)
+    print(skips[-1].shape)
     n = tf.concat([n, skips.pop()], axis=-1)
     n = tf.nn.leaky_relu(tf.layers.conv2d(n, 96, 3, padding='same', name='dec_conv5', kernel_regularizer=regularizer), alpha=0.1)
     n = tf.nn.leaky_relu(tf.layers.conv2d(n, 96, 3, padding='same', name='dec_conv5b', kernel_regularizer=regularizer), alpha=0.1)
