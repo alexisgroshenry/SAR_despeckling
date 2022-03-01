@@ -16,11 +16,15 @@ def upscale2d(x, factor=2):
 
 regularizer = tf.contrib.layers.l2_regularizer(0.1)
 
-def autoencoder(x, input_c_dim, width=256, height=256, **_kwargs):
+def autoencoder(x, input_c_dim, width=256, height=256, miso=True, **_kwargs):
     """if config.get_nb_channels() == 1:
         x.set_shape([None, 1, height, width])
     else:
         x.set_shape([None, 3, height, width])"""
+    if miso:
+        output_c_dim = 1
+    else:
+        output_c_dim = input_c_dim
 
     x.set_shape([None, height, width, input_c_dim]) 
     skips = [x]
@@ -75,11 +79,11 @@ def autoencoder(x, input_c_dim, width=256, height=256, **_kwargs):
     n = tf.nn.leaky_relu(tf.layers.conv2d(n, 32, 3, padding='same', name='dec_conv1b', kernel_regularizer=regularizer), alpha=0.1)
 
     # n = tf.layers.conv2d(n, 2, 3, padding='same', name='dec_conv1', kernel_regularizer=regularizer)
-    n = tf.layers.conv2d(n, input_c_dim, 3, padding='same', name='dec_conv1', kernel_regularizer=regularizer) #alexis
+    n = tf.layers.conv2d(n, output_c_dim, 3, padding='same', name='dec_conv1', kernel_regularizer=regularizer)
     
-    if input_c_dim==1:
+    if output_c_dim==1:
         ###  WITHOUT MAP PREDICTION
-        return x[:,:,:,:1] - n[:,:,:,:]
+        return tf.expand_dims(x[:,:,:,:1] - n[:,:,:,:], axis=3)
     else:
         ### WITH MAP PREDICTION
         return tf.concat( [tf.expand_dims(x[:,:,:,0] - n[:,:,:,0],axis=3), n[:,:,:,1:]], axis=3)
