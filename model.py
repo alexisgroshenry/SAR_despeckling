@@ -89,6 +89,9 @@ class denoiser(object):
 
             # modify evaluate to handle new format of eval_files (list of lists instead of list)
             for idx_p, file in enumerate(eval_files[idx]):
+                if idx_p and self.miso:
+                    # we stop here since the output is 1-dim
+                    break
                 groundtruth = denormalize_sar(real_image[:, :256, :256, idx_p])
                 noisyimage = denormalize_sar(noisy_image[:,:,:,idx_p])
                 if idx_p:
@@ -265,8 +268,11 @@ class denoiser(object):
         print(" [*] Load weights SUCCESS...")
         print("[*] start testing...")
 
-        test_data, test_files = load_sar_images(test_set, pile, self.miso)
+        test_data, test_files = load_sar_images(test_set, pile)
         for idx in range(len(test_files)):
+            if idx_p and self.miso:
+                # we stop here since the output is 1-dim
+                break
             real_image = tf.expand_dims(test_data[idx], axis=0).astype(np.float32)
             # real_image = load_sar_images(test_files[idx]).astype(np.float32)  
             stride = 32

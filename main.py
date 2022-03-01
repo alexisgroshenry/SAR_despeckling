@@ -49,7 +49,7 @@ args = parser.parse_args()
 
 def denoiser_train(denoiser, lr):
     data = load_train_data()
-    eval_data, eval_files = load_sar_images(args.eval_set, args.pile, args.miso) 
+    eval_data, eval_files = load_sar_images(args.eval_set, args.pile) 
     denoiser.train(data, eval_data, eval_files, eval_set=args.eval_set, batch_size=args.batch_size,
                    ckpt_dir=args.ckpt_dir, epoch=args.epoch, lr=lr, sample_dir=args.sample_dir, step=0, pat_size=args.patch_size, stride=args.stride_size, eval_every_epoch=2)
     
