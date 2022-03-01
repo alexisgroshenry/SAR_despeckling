@@ -60,8 +60,10 @@ def load_train_data():
     return real_data
 
 
-def load_sar_images(datasetdir, pile): # alexis
+def load_sar_images(datasetdir, pile, miso): # alexis
     # get the name of the piles for evaluation (files must follow name convention "pilename_blabla.npy") # alexis
+    if miso:
+        pile = 1
     filelist = glob(datasetdir+'*.npy') # alexis
     name_pile = list(set([file.replace(datasetdir,'').split('_')[0] for file in filelist])) # alexis
     name_pile.sort() # alexis
