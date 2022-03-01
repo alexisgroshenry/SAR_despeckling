@@ -25,6 +25,8 @@ parser.add_argument('--lr', dest='lr', type=float, default=0.001, help='initial 
 parser.add_argument('--use_gpu', dest='use_gpu', type=int, default=1, help='gpu flag, 1 for GPU and 0 for CPU')
 parser.add_argument('--phase', dest='phase', default='train', help='train or test')
 parser.add_argument('--pile', dest='pile', type=int, default=1, help='size of the pile')  ## SERIES MULTI-TEMPORAL
+parser.add_argument('--miso', dest='miso', type=bool, default=True, help='if True, multi-input & single output')
+parser.add_argument('--copy_input', dest='copy_input', type=bool, default=False, help='if True, two noisy samples of the same image')
 
 
 parser.add_argument('--checkpoint_dir', dest='ckpt_dir', default="./checkpoint",
@@ -76,7 +78,7 @@ def main(_):
         config.gpu_options.allow_growth = True
 
         with tf.Session(config=config) as sess:
-            model = denoiser(sess, stride=args.stride_size, input_c_dim=args.pile)
+            model = denoiser(sess, stride=args.stride_size, input_c_dim=args.pile, miso=args.miso)
             if args.phase == 'train':
                 denoiser_train(model, lr=lr)
             elif args.phase == 'test':
