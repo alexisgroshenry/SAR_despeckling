@@ -265,7 +265,7 @@ class denoiser(object):
         print(" [*] Load weights SUCCESS...")
         print("[*] start testing...")
 
-        test_data, test_files = load_sar_images(test_set, pile)
+        test_data, test_files = load_sar_images(test_set, pile, self.miso)
         for idx in range(len(test_files)):
             real_image = tf.expand_dims(test_data[idx], axis=0).astype(np.float32)
             # real_image = load_sar_images(test_files[idx]).astype(np.float32)  
