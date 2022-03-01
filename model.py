@@ -14,10 +14,12 @@ c = (1 / 2) * (special.psi(L) - np.log(L))
 cn = c / (M - m) 
 
 class denoiser(object):
-    def __init__(self, sess, stride=128, input_c_dim=1, batch_size=4):
+    def __init__(self, sess, stride=128, input_c_dim=1, miso=True, copy_input=False, batch_size=4):
         
         self.sess = sess
         self.input_c_dim = input_c_dim
+        self.miso = miso
+        self.copy_input = copy_input
         self.X_input = tf.placeholder(tf.float32, [None, None, None, self.input_c_dim],
                                  name='real_image')
         self.is_training = tf.placeholder(tf.bool, name='is_training')
@@ -41,7 +43,7 @@ class denoiser(object):
 
 
         self.X = tf.cond(self.is_training, true_fn, false_fn)
-        self.Y  = autoencoder(self.X, self.input_c_dim)
+        self.Y  = autoencoder(self.X, self.input_c_dim, self.miso)
 
         # ----- loss -----
         self.alpha_noise = 1.
@@ -86,16 +88,16 @@ class denoiser(object):
                            self.is_training: False})
 
             # modify evaluate to handle new format of eval_files (list of lists instead of list)
-            for idx_p, file in enumerate(eval_files[idx]): # alexis
-                groundtruth = denormalize_sar(real_image[:, :256, :256, idx_p]) # alexis
-                noisyimage = denormalize_sar(noisy_image[:,:,:,idx_p]) # alexis
-                if idx_p: # alexis
-                    outputimage = denormalize_sar(output_clean_image[:,:,:,0]) + denormalize_sar(output_clean_image[:,:,:,idx_p]) # alexis
-                else: # alexis
-                    outputimage = denormalize_sar(output_clean_image[:,:,:,0]) # alexis
-                imagename0 = file.replace(eval_set, "") # alexis
-                imagename = imagename0.replace('.npy', '_' + str(iter_num) + '.npy') # alexis
-                save_sar_images(outputimage, noisyimage, imagename, sample_dir) # alexis
+            for idx_p, file in enumerate(eval_files[idx]):
+                groundtruth = denormalize_sar(real_image[:, :256, :256, idx_p])
+                noisyimage = denormalize_sar(noisy_image[:,:,:,idx_p])
+                if idx_p:
+                    outputimage = denormalize_sar(output_clean_image[:,:,:,0]) + denormalize_sar(output_clean_image[:,:,:,idx_p])
+                else:
+                    outputimage = denormalize_sar(output_clean_image[:,:,:,0])
+                imagename0 = file.replace(eval_set, "")
+                imagename = imagename0.replace('.npy', '_' + str(iter_num) + '.npy')
+                save_sar_images(outputimage, noisyimage, imagename, sample_dir)
         print("--- Evaluation ---- Done ---")
         
         
@@ -121,7 +123,7 @@ class denoiser(object):
 
         indexes = np.zeros((numPatch, 4+1+1), dtype=np.uint16) 
         count_ = np.zeros(data.shape[0], dtype=np.uint16)
-        for i in range(data.shape[0]): 
+        for i in range(data.shape[0]):
             im_h = np.size(data[i][1][:,:,0], 0)
             im_w = np.size(data[i][1][:,:,0], 1)
           
@@ -179,18 +181,17 @@ class denoiser(object):
                     stride_shift_y = np.random.randint(low=0, high=int(stride/2))
                     y = np.max((0,y-stride_shift_y))
 
-                    # Commentaires de Julien
-                    # Il prend une image à une date donnée (id_date) # Julien
-                    im0 = data[id_pile][1][ x:x + pat_size, y:y + pat_size, id_date]
-                    im_channels=im0
-                    # Il la duplique sur les channels de pile mais on veut pas ça, on aimerait des images différentes à chaque fois !! # Julien
-                    im_channels = np.expand_dims(im_channels, axis=2) 
-                    batch_images[i,:,:,:] = im_channels
-
-                    # Une image différente à chaque channel ~ date  # Julien
-                    for date in range(self.input_c_dim) : # pour chaque pile # Julien
-                        im0 = data[id_pile][1][ x:x + pat_size, y:y + pat_size, (id_date + date) % data[id_pile][1].shape[-1]] # image à l'indice id_data + 0 etc # Julien
-                        batch_images[i,:,:,date] = im0 # la date contient une image unique # Julien
+                    if self.copy_input:
+                        im0 = data[id_pile][1][ x:x + pat_size, y:y + pat_size, id_date]
+                        im_channels=im0
+                        # put twice the image in the batch
+                        im_channels = np.expand_dims(im_channels, axis=2)
+                        batch_images[i,:,:,:] = im_channels
+                    else:
+                        for date in range(self.input_c_dim) :
+                            # take the next image and cycle between the last and the first
+                            im0 = data[id_pile][1][ x:x + pat_size, y:y + pat_size, (id_date + date) % data[id_pile][1].shape[-1]]
+                            batch_images[i,:,:,date] = im0
 
                 _, loss,_= self.sess.run([self.train_op, self.loss, self.print_op],
                                          feed_dict={self.X_input: batch_images, self.lr: lr[epoch], self.is_training: True})
@@ -264,10 +265,10 @@ class denoiser(object):
         print(" [*] Load weights SUCCESS...")
         print("[*] start testing...")
 
-        test_data, test_files = load_sar_images(test_set, pile) # alexis
-        for idx in range(len(test_files)): # alexis
-            real_image = tf.expand_dims(test_data[idx], axis=0).astype(np.float32) # alexis
-            # real_image = load_sar_images(test_files[idx]).astype(np.float32)   # alexis
+        test_data, test_files = load_sar_images(test_set, pile)
+        for idx in range(len(test_files)):
+            real_image = tf.expand_dims(test_data[idx], axis=0).astype(np.float32)
+            # real_image = load_sar_images(test_files[idx]).astype(np.float32)  
             stride = 32
             pat_size = 256
 
