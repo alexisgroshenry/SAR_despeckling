@@ -43,7 +43,7 @@ class denoiser(object):
 
 
         self.X = tf.cond(self.is_training, true_fn, false_fn)
-        self.Y  = autoencoder(self.X, self.input_c_dim, self.miso)
+        self.Y  = autoencoder(self.X, self.input_c_dim, miso=self.miso)
 
         # ----- loss -----
         self.alpha_noise = 1.
