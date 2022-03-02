@@ -3,7 +3,6 @@ import random
 import shutil
 
 if __name__ == "__main__" :
-
     # Directory of the data
     dir_name = "./GT_FULL"
 
@@ -20,7 +19,7 @@ if __name__ == "__main__" :
         piles.add(pile_name)
     piles = list(piles)
 
-    if by_pile:
+    if by_pile == True :
         # Split by piles
         # first three piles for train, fourth for val and last for test
         train_files = []
@@ -40,9 +39,9 @@ if __name__ == "__main__" :
         with open("train_split_GT.txt","w") as f :
             f.writelines(train_files)
         with open("validation_split_GT.txt","w") as f :
-            f.writelines(train_files)
+            f.writelines(validation_files)
         with open("test_split_GT.txt","w") as f :
-            f.writelines(train_files)
+            f.writelines(test_files)
 
     else :
         # Random split
@@ -51,27 +50,31 @@ if __name__ == "__main__" :
         files = [f for f in files if f.endswith("npy")] # pairs together
         random.shuffle(files)
 
+        train_count = int(0.7*len(files))
+        val_count = int(0.8*len(files))
+
         train_files = []
         validation_files = []
         test_files = []
 
-        for file in files :
-            pile_name = file.split('_')[0]
-            idx = piles.index(pile_name)
-            if idx < 3 :
+
+        for idx, file in enumerate(files) :
+            if idx < train_count :
                 train_files.append(file+"\n")
                 train_files.append(file.replace("npy","png")+"\n")
-            elif idx == 3 :
+            elif idx < val_count :
+                validation_files.append(file+"\n")
                 validation_files.append(file.replace("npy","png")+"\n")
             else :
+                test_files.append(file+"\n")
                 test_files.append(file.replace("npy","png")+"\n")
 
         with open("train_split_GT.txt","w") as f :
             f.writelines(train_files)
         with open("validation_split_GT.txt","w") as f :
-            f.writelines(train_files)
+            f.writelines(validation_files)
         with open("test_split_GT.txt","w") as f :
-            f.writelines(train_files)
+            f.writelines(test_files)
 
     # copy according to the split
     if not os.path.exists(folder_final) :
@@ -105,7 +108,7 @@ if __name__ == "__main__" :
         destination = folder
         shutil.copy(source, destination)
         
-    print("Working on test set")
+    print("Working on testing set")
     folder = os.path.join(folder_final,"test")
     if not os.path.exists(folder) :
         os.mkdir(folder)
