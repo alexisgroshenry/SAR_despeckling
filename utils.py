@@ -51,10 +51,12 @@ def load_train_data():
         test = glob(datasetdir+name_p+'*.npy')
         print(test)
         test.sort()
-        im_0 = np.load(test[0])
-        im = np.zeros((im_0.shape[0], im_0.shape[1], len(test)))
+        """im_0 = np.load(test[0])
+        im = np.zeros((im_0.shape[0], im_0.shape[1], len(test)))"""
+        im = []
         for i in range(len(test)):
-            im[:,:,i] = normalize_sar(np.load(test[i]))
+            # im[:,:,i] = normalize_sar(np.load(test[i]))
+            im.append(test[i])
         dataset_train.append((name_p, im))
     real_data = np.array(dataset_train)
     return real_data
