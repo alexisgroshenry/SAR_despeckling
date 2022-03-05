@@ -111,9 +111,9 @@ class denoiser(object):
         numPatch_ = 0
         for i in range(data.shape[0]):
             count = 0
-            img = np.load(data[i][1][0]) # data[i][1][:,:,0] # Julien
-            im_h = np.size(img, 0)
-            im_w = np.size(img, 1)
+            # img = np.load(data[i][1][0]) # data[i][1][:,:,0] # Julien
+            im_h = data[i][2] # np.size(img, 0) Julien
+            im_w = data[i][3] # np.size(img, 1) Julien
 
             for x in range(0 + step, im_h - pat_size, stride):
                 for y in range(0 + step, im_w - pat_size, stride):
@@ -127,9 +127,9 @@ class denoiser(object):
         indexes = np.zeros((numPatch, 4+1+1), dtype=np.uint16) 
         count_ = np.zeros(data.shape[0], dtype=np.uint16)
         for i in range(data.shape[0]): 
-            img = np.load(data[i][1][0]) # Julien
-            im_h = np.size(img, 0) # Julien
-            im_w = np.size(img, 1) # Julien
+            # img = np.load(data[i][1][0]) # data[i][1][:,:,0] # Julien
+            im_h = data[i][2] # np.size(img, 0) Julien
+            im_w = data[i][3] # np.size(img, 1) Julien
             """im_h = np.size(data[i][1][:,:,0], 0)
             im_w = np.size(data[i][1][:,:,0], 1)"""
           
@@ -208,7 +208,7 @@ class denoiser(object):
                                 im0 = np.load(data[id_pile][1][new_idx])[x:x+pat_size,y:y+pat_size] # Julien
                                 indices_chosen.append(new_idx) # Julien
                             #if we want consecuitives dates
-                            im0 = np.load(data[id_pile][1][(id_date+date) % len(data[id_pile][1])])[x:x+pat_size,y:y+pat_size] # Julien
+                            # im0 = np.load(data[id_pile][1][(id_date+date) % len(data[id_pile][1])])[x:x+pat_size,y:y+pat_size] # Julien
                             # take the next image and cycle between the last and the first
                             # im0 = data[id_pile][1][ x:x + pat_size, y:y + pat_size, (id_date + date) % data[id_pile][1].shape[-1]]
                             batch_images[i,:,:,date] = im0

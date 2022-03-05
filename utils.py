@@ -57,7 +57,11 @@ def load_train_data():
         for i in range(len(test)):
             # im[:,:,i] = normalize_sar(np.load(test[i]))
             im.append(test[i])
-        dataset_train.append((name_p, im))
+
+        image = np.load(test[0]) # Julien
+        im_h = np.size(image,0) # Julien
+        im_w = np.size(image,1) # Julien
+        dataset_train.append((name_p, im,im_h,im_w)) # Julien
     real_data = np.array(dataset_train)
     return real_data
 
