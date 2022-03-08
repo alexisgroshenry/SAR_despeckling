@@ -25,9 +25,9 @@ parser.add_argument('--lr', dest='lr', type=float, default=0.001, help='initial 
 parser.add_argument('--use_gpu', dest='use_gpu', type=int, default=1, help='gpu flag, 1 for GPU and 0 for CPU')
 parser.add_argument('--phase', dest='phase', default='train', help='train or test')
 parser.add_argument('--pile', dest='pile', type=int, default=1, help='size of the pile')  ## SERIES MULTI-TEMPORAL
-parser.add_argument('--miso', dest='miso', type=bool, default=True, help='if True, multi-input & single output')
-parser.add_argument('--copy_input', dest='copy_input', type=bool, default=False, help='if True, two noisy samples of the same image')
-parser.add_argument('--load_all', dest='load_all', type=bool, default=False, help='if True, the data will be loaded in the load_train function, else at each batch')
+parser.add_argument('--miso', action='store_true', help='if True, multi-input & single output')
+parser.add_argument('--copy_input', action='store_true', help='if True, two noisy samples of the same image')
+parser.add_argument('--load_all', action='store_true', help='if True, the data will be loaded in the load_train function, else at each batch')
 
 
 parser.add_argument('--checkpoint_dir', dest='ckpt_dir', default="./checkpoint",
@@ -36,14 +36,11 @@ parser.add_argument('--sample_dir', dest='sample_dir', default="./sample", help=
 parser.add_argument('--test_dir', dest='test_dir', default="./test/", help='test sample are saved here')
 
 
-
-
 parser.add_argument('--eval_set', dest='eval_set', default='./data/evaluation/', help='dataset for eval in training')
 parser.add_argument('--test_set', dest='test_set', default='./data/test/noisy/', help='dataset for testing')
 
 
 args = parser.parse_args()
-
 
 def denoiser_train(denoiser, lr):
     data = load_train_data(load_all=args.load_all)
