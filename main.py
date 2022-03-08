@@ -27,6 +27,7 @@ parser.add_argument('--phase', dest='phase', default='train', help='train or tes
 parser.add_argument('--pile', dest='pile', type=int, default=1, help='size of the pile')  ## SERIES MULTI-TEMPORAL
 parser.add_argument('--miso', dest='miso', type=bool, default=True, help='if True, multi-input & single output')
 parser.add_argument('--copy_input', dest='copy_input', type=bool, default=False, help='if True, two noisy samples of the same image')
+parser.add_argument('--load_all', dest='load_all', type=bool, default=False, help='if True, the data will be loaded in the load_train function, else at each batch')
 
 
 parser.add_argument('--checkpoint_dir', dest='ckpt_dir', default="./checkpoint",
@@ -44,18 +45,16 @@ parser.add_argument('--test_set', dest='test_set', default='./data/test/noisy/',
 args = parser.parse_args()
 
 
-
-
-
 def denoiser_train(denoiser, lr):
-    data = load_train_data()
-    eval_data, eval_files = load_sar_images(args.eval_set, args.pile) 
+    data = load_train_data(load_all=args.load_all)
+    eval_data, eval_files = load_sar_images(args.eval_set, args.pile)  
     denoiser.train(data, eval_data, eval_files, eval_set=args.eval_set, batch_size=args.batch_size,
                    ckpt_dir=args.ckpt_dir, epoch=args.epoch, lr=lr, sample_dir=args.sample_dir, step=0, pat_size=args.patch_size, stride=args.stride_size, eval_every_epoch=2)
     
 
 def denoiser_test(denoiser):
-    denoiser.test(test_set=args.test_set, ckpt_dir=args.ckpt_dir, save_dir=args.test_dir, pile=args.pile)
+    test_files = glob(args.test_set + '*.npy')
+    denoiser.test(test_files, test_set=args.test_set, ckpt_dir=args.ckpt_dir, save_dir=args.test_dir)
 
 
 
@@ -78,7 +77,7 @@ def main(_):
         config.gpu_options.allow_growth = True
 
         with tf.Session(config=config) as sess:
-            model = denoiser(sess, stride=args.stride_size, input_c_dim=args.pile, miso=args.miso)
+            model = denoiser(sess, stride=args.stride_size, input_c_dim=args.pile, miso=args.miso, load_all=args.load_all)
             if args.phase == 'train':
                 denoiser_train(model, lr=lr)
             elif args.phase == 'test':
@@ -89,7 +88,7 @@ def main(_):
     else:
         print("CPU\n")
         with tf.Session() as sess:
-            model = denoiser(sess, stride=args.stride_size)
+            model = denoiser(sess, stride=args.stride_size, input_c_dim=args.pile, miso=args.miso, load_all=args.load_all)
             if args.phase == 'train':
                 denoiser_train(model, lr=lr)
             elif args.phase == 'test':
@@ -97,7 +96,6 @@ def main(_):
             else:
                 print('[!]Unknown phase')
                 exit(0)
-
 
 if __name__ == '__main__':
     tf.app.run()

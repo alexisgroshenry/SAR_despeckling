@@ -14,12 +14,13 @@ c = (1 / 2) * (special.psi(L) - np.log(L))
 cn = c / (M - m) 
 
 class denoiser(object):
-    def __init__(self, sess, stride=128, input_c_dim=1, miso=True, copy_input=False, batch_size=4):
+    def __init__(self, sess, stride=128, input_c_dim=1, miso=True, copy_input=False, batch_size=4, load_all=True):
         
         self.sess = sess
         self.input_c_dim = input_c_dim
         self.miso = miso
         self.copy_input = copy_input
+        self.load_all = load_all
         self.X_input = tf.placeholder(tf.float32, [None, None, None, self.input_c_dim],
                                  name='real_image')
         self.is_training = tf.placeholder(tf.bool, name='is_training')
@@ -107,40 +108,76 @@ class denoiser(object):
         
     def train(self, data, eval_data, eval_files, eval_set, batch_size, ckpt_dir, epoch, lr, sample_dir, step, pat_size, stride, eval_every_epoch=2):
         
-####################################################################           
+####################################################################     
         numPatch_ = 0
-        for i in range(data.shape[0]):
-            count = 0
-            # img = np.load(data[i][1][0]) # data[i][1][:,:,0] # Julien
-            im_h = data[i][2] # np.size(img, 0) Julien
-            im_w = data[i][3] # np.size(img, 1) Julien
+        if not self.load_all :
+            # If the data is to be loaded at each batch
+            for i in range(data.shape[0]):
+                count = 0
+                # img = np.load(data[i][1][0]) # data[i][1][:,:,0] # Julien
+                im_h = data[i][2] # np.size(img, 0) Julien
+                im_w = data[i][3] # np.size(img, 1) Julien
 
-            for x in range(0 + step, im_h - pat_size, stride):
-                for y in range(0 + step, im_w - pat_size, stride):
-                    count += 1
-            numPatch_ += count* len(data[i][1]) #data[i][1].shape[-1] # Julien
-
-        numPatch = int((numPatch_)/batch_size) * batch_size
-        numBatch = int(numPatch / batch_size)
-        
-
-        indexes = np.zeros((numPatch, 4+1+1), dtype=np.uint16) 
-        count_ = np.zeros(data.shape[0], dtype=np.uint16)
-        for i in range(data.shape[0]): 
-            # img = np.load(data[i][1][0]) # data[i][1][:,:,0] # Julien
-            im_h = data[i][2] # np.size(img, 0) Julien
-            im_w = data[i][3] # np.size(img, 1) Julien
-            """im_h = np.size(data[i][1][:,:,0], 0)
-            im_w = np.size(data[i][1][:,:,0], 1)"""
-          
-            for id_pile in range(len(data[i][1])) : # data[i][1].shape[-1]): # Julien
-                count_b = 0
                 for x in range(0 + step, im_h - pat_size, stride):
                     for y in range(0 + step, im_w - pat_size, stride):
-                        if np.sum(count_)<numPatch:
-                            indexes[np.sum(count_),:] = [np.sum(count_),i,count_b, x, y, id_pile]
-                            count_[i] += 1
-                            count_b += 1
+                        count += 1
+                numPatch_ += count* len(data[i][1]) #data[i][1].shape[-1] # Julien
+
+            numPatch = int((numPatch_)/batch_size) * batch_size
+            numBatch = int(numPatch / batch_size)
+            
+
+            indexes = np.zeros((numPatch, 4+1+1), dtype=np.uint16) 
+            count_ = np.zeros(data.shape[0], dtype=np.uint16)
+            for i in range(data.shape[0]): 
+                # img = np.load(data[i][1][0]) # data[i][1][:,:,0] # Julien
+                im_h = data[i][2] # np.size(img, 0) Julien
+                im_w = data[i][3] # np.size(img, 1) Julien
+                """im_h = np.size(data[i][1][:,:,0], 0)
+                im_w = np.size(data[i][1][:,:,0], 1)"""
+            
+                for id_pile in range(len(data[i][1])) : # data[i][1].shape[-1]): # Added
+                    count_b = 0
+                    for x in range(0 + step, im_h - pat_size, stride):
+                        for y in range(0 + step, im_w - pat_size, stride):
+                            if np.sum(count_)<numPatch:
+                                indexes[np.sum(count_),:] = [np.sum(count_),i,count_b, x, y, id_pile]
+                                count_[i] += 1
+                                count_b += 1
+
+        if self.load_all :
+            # data already in data
+            for i in range(data.shape[0]):
+                count = 0
+                img = data[i][1][:,:,0] # Julien
+                im_h = np.size(img, 0) 
+                im_w = np.size(img, 1)
+
+                for x in range(0 + step, im_h - pat_size, stride):
+                    for y in range(0 + step, im_w - pat_size, stride):
+                        count += 1
+                numPatch_ += count* data[i][1].shape[-1] # Julien
+
+            numPatch = int((numPatch_)/batch_size) * batch_size
+            numBatch = int(numPatch / batch_size)
+            
+
+            indexes = np.zeros((numPatch, 4+1+1), dtype=np.uint16) 
+            count_ = np.zeros(data.shape[0], dtype=np.uint16)
+            for i in range(data.shape[0]): 
+                im_h = np.size(data[i][1][:,:,0], 0)
+                im_w = np.size(data[i][1][:,:,0], 1)
+            
+                for id_pile in range(data[i][1].shape[-1]): # Added
+                    count_b = 0
+                    for x in range(0 + step, im_h - pat_size, stride):
+                        for y in range(0 + step, im_w - pat_size, stride):
+                            if np.sum(count_)<numPatch:
+                                indexes[np.sum(count_),:] = [np.sum(count_),i,count_b, x, y, id_pile]
+                                count_[i] += 1
+                                count_b += 1
+
+                                
         np.random.shuffle(indexes)
         indexes[:,0] = np.arange(0, indexes.shape[0])
 
@@ -187,31 +224,60 @@ class denoiser(object):
                     stride_shift_y = np.random.randint(low=0, high=int(stride/2))
                     y = np.max((0,y-stride_shift_y))
 
-                    if self.copy_input:
-                        # im0 = data[id_pile][1][ x:x + pat_size, y:y + pat_size, id_date] Julien
-                        im0 = np.load(data[id_pile][1][id_date])[x:x+pat_size,y:y+pat_size] # Julien
-                        im_channels=im0
-                        # put twice the image in the batch
-                        im_channels = np.expand_dims(im_channels, axis=2)
-                        batch_images[i,:,:,:] = im_channels
-                    else:
-                        # Une image différente à chaque channel ~ date 
-                        indices_chosen = [id_date] # Julien
-                        for date in range(self.input_c_dim) :
-                            # if we do not want consecutives dates
-                            if date == 0 : # Julien
-                                im0 = np.load(data[id_pile][1][id_date])[x:x+pat_size,y:y+pat_size] # Julien
-                            else : # Julien
-                                new_idx = id_date # Julien
-                                while new_idx in indices_chosen : # Julien
-                                    new_idx = random.randint(0, len(data[id_pile][1])-1) # Julien
-                                im0 = np.load(data[id_pile][1][new_idx])[x:x+pat_size,y:y+pat_size] # Julien
-                                indices_chosen.append(new_idx) # Julien
-                            #if we want consecuitives dates
-                            # im0 = np.load(data[id_pile][1][(id_date+date) % len(data[id_pile][1])])[x:x+pat_size,y:y+pat_size] # Julien
-                            # take the next image and cycle between the last and the first
-                            # im0 = data[id_pile][1][ x:x + pat_size, y:y + pat_size, (id_date + date) % data[id_pile][1].shape[-1]]
-                            batch_images[i,:,:,date] = im0
+                    """# Il prend une image à une date donnée
+                    im0 = data[id_pile][1][ x:x + pat_size, y:y + pat_size, id_date]
+                    im_channels=im0
+                    # Il la duplique sur les channels de pile mais on veut pas ça, on aimerait des images différentes à chaque fois !!
+                    im_channels = np.expand_dims(im_channels, axis=2) 
+                    batch_images[i,:,:,:] = im_channels"""
+                    if not self.load_all :
+                        if self.copy_input:
+                            im0 = np.load(data[id_pile][1][id_date])[x:x+pat_size,y:y+pat_size] # Julien
+                            im_channels=im0
+                            # put twice the image in the batch
+                            im_channels = np.expand_dims(im_channels, axis=2)
+                            batch_images[i,:,:,:] = im_channels
+                        else:
+                            # Une image différente à chaque channel ~ date 
+                            indices_chosen = [id_date]
+                            for date in range(self.input_c_dim) : # pour chaque pile # Julien
+                                # if we do not want consecutives dates
+                                if date == 0 : # Julien
+                                    im0 = np.load(data[id_pile][1][id_date])[x:x+pat_size,y:y+pat_size] # Julien
+                                else : # Julien
+                                    new_idx = id_date # Julien
+                                    while new_idx in indices_chosen : # Julien
+                                        new_idx = random.randint(0, len(data[id_pile][1])-1) # Julien
+                                    im0 = np.load(data[id_pile][1][new_idx])[x:x+pat_size,y:y+pat_size] # Julien
+                                    indices_chosen.append(new_idx)
+                                #if we want consecuitives dates
+                                # im0 = np.load(data[id_pile][1][(id_date+date) % len(data[id_pile][1])])[x:x+pat_size,y:y+pat_size] # Julien
+                                batch_images[i,:,:,date] = im0 # la date contient une image unique # Julien
+
+                    if self.load_all :
+                        if self.copy_input:
+                            im0 = im0 = data[id_pile][1][ x:x + pat_size, y:y + pat_size, (id_date) % data[id_pile][1].shape[-1]] # Julien
+                            im_channels=im0
+                            # put twice the image in the batch
+                            im_channels = np.expand_dims(im_channels, axis=2)
+                            batch_images[i,:,:,:] = im_channels
+                        else:
+                            # Une image différente à chaque channel ~ date 
+                            indices_chosen = [id_date]
+                            for date in range(self.input_c_dim) : # pour chaque pile # Julien
+                                # if we do not want consecutives dates
+                                if date == 0 : # Julien
+                                    im0 = im0 = data[id_pile][1][ x:x + pat_size, y:y + pat_size, (id_date) % data[id_pile][1].shape[-1]] # Julien
+                                else : # Julien
+                                    new_idx = id_date # Julien
+                                    while new_idx in indices_chosen : # Julien
+                                        new_idx = random.randint(0, len(data[id_pile][1])-1) # Julien
+                                    im0 = im0 = data[id_pile][1][ x:x + pat_size, y:y + pat_size, (new_idx) % data[id_pile][1].shape[-1]] # Julien
+                                    indices_chosen.append(new_idx)
+                                #if we want consecuitives dates
+                                # im0 = data[id_pile][1][ x:x + pat_size, y:y + pat_size, (id_date + date) % data[id_pile][1].shape[-1]] # image à l'indice id_data + 0 etc # Julien
+                                batch_images[i,:,:,date] = im0 # la date contient une image unique # Julien
+                    
 
                 _, loss,_= self.sess.run([self.train_op, self.loss, self.print_op],
                                          feed_dict={self.X_input: batch_images, self.lr: lr[epoch], self.is_training: True})

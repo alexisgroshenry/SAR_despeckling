@@ -36,7 +36,7 @@ def BCrossEntropy(yHat, y):
 
 
 
-def load_train_data():
+def load_train_data(load_all=True):
     
     datasetdir = './data/training/'
     # get the name of the piles for training (files must follow name convention "pilename_blabla.npy") # alexis
@@ -45,23 +45,29 @@ def load_train_data():
     name_pile.sort() # alexis
     #name_pile = ['lely1', 'lely2', 'lely3', 'limagne1', 'limagne2', 'marais12', 'marais13'
     #name_pile = ['lely1', 'marais12', 'marais13'] 
-    #name_pile = ['lely', 'marais1']
+    name_pile = ['lely', 'marais1']
     dataset_train = []
     for name_p in name_pile:
         test = glob(datasetdir+name_p+'*.npy')
         print(test)
         test.sort()
-        """im_0 = np.load(test[0])
-        im = np.zeros((im_0.shape[0], im_0.shape[1], len(test)))"""
-        im = []
-        for i in range(len(test)):
-            # im[:,:,i] = normalize_sar(np.load(test[i]))
-            im.append(test[i])
+        #Julien
+        if load_all :
+            im_0 = np.load(test[0])
+            im = np.zeros((im_0.shape[0], im_0.shape[1], len(test)))
+            for i in range(len(test)):
+                im[:,:,i] = normalize_sar(np.load(test[i]))
+            dataset_train.append((name_p, im)) # Julien
 
-        image = np.load(test[0]) # Julien
-        im_h = np.size(image,0) # Julien
-        im_w = np.size(image,1) # Julien
-        dataset_train.append((name_p, im,im_h,im_w)) # Julien
+        else :
+            im = []
+            for i in range(len(test)):
+                im.append(test[i])
+
+            image = np.load(test[0]) # Julien
+            im_h = np.size(image,0) # Julien
+            im_w = np.size(image,1) # Julien
+            dataset_train.append((name_p, im,im_h,im_w)) # Julien
     real_data = np.array(dataset_train)
     return real_data
 
