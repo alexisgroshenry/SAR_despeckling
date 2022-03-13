@@ -345,7 +345,6 @@ class denoiser(object):
 
     def test(self, test_set, ckpt_dir, save_dir, pile): 
         tf.initialize_all_variables().run()
-        assert len(test_files) != 0, 'No testing data!'
         load_model_status, global_step = self.load(ckpt_dir)
         assert load_model_status == True, '[!] Load weights FAILED...'
         print(" [*] Load weights SUCCESS...")
@@ -353,10 +352,7 @@ class denoiser(object):
 
         test_data, test_files = load_sar_images(test_set, pile)
         for idx in range(len(test_files)):
-            if idx_p and self.miso:
-                # we stop here since the output is 1-dim
-                break
-            real_image = tf.expand_dims(test_data[idx], axis=0).astype(np.float32)
+            real_image = test_data[idx].astype(np.float32)
             # real_image = load_sar_images(test_files[idx]).astype(np.float32)  
             stride = 32
             pat_size = 256
@@ -370,6 +366,7 @@ class denoiser(object):
             if im_h == pat_size:
                 x_range = list(np.array([0]))
             else:
+                print(im_h, pat_size)
                 x_range = list(range(0, im_h - pat_size, stride))
                 if (x_range[-1] + pat_size) < im_h: x_range.extend(range(im_h - pat_size, im_h - pat_size + 1))
 
@@ -387,17 +384,19 @@ class denoiser(object):
                                                                             self.is_training: False})
                     output_clean_image[:, x:x + pat_size, y:y + pat_size, :] += tmp_clean_image # alexis
                     # complete the change maps with the reference denoised image
-                    output_clean_image[:, x:x + pat_size, y:y + pat_size, 1:] += tmp_clean_image[:,:,:,1:] # alexis
+                    if not self.miso:
+                        output_clean_image[:, x:x + pat_size, y:y + pat_size, 1:] += tmp_clean_image[:,:,:,1:] # alexis
                     count_image[:, x:x + pat_size, y:y + pat_size, :] += np.ones((1, pat_size, pat_size, 1)) # alexis
             output_clean_image = output_clean_image / count_image
-
             noisyimage = denormalize_sar(real_image)
             outputimage = denormalize_sar(output_clean_image)
 
             # handle the new format of test_files
             for idx_p, file in enumerate(test_files[idx]): # alexis
+                if idx_p and self.miso:
+                    break
                 imagename = file.replace(test_set, "") # alexis
-                save_sar_images(outputimage[:,:,:,idx_p], noisyimage[:,:,:,idx_p], imagename, save_dir) # alexis
+                save_sar_images(outputimage[:,:,idx_p], noisyimage[:,:,idx_p], imagename, save_dir) # alexis
 
 
         print("--- Done Testing ---")

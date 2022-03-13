@@ -51,7 +51,7 @@ def denoiser_train(denoiser, lr):
 
 def denoiser_test(denoiser):
     test_files = glob(args.test_set + '*.npy')
-    denoiser.test(test_files, test_set=args.test_set, ckpt_dir=args.ckpt_dir, save_dir=args.test_dir)
+    denoiser.test(test_set=args.test_set, ckpt_dir=args.ckpt_dir, save_dir=args.test_dir, pile=args.pile)
 
 
 
