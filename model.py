@@ -231,6 +231,7 @@ class denoiser(object):
                     im_channels = np.expand_dims(im_channels, axis=2) 
                     batch_images[i,:,:,:] = im_channels"""
                     if not self.load_all :
+                        print('what')
                         if self.copy_input:
                             im0 = np.load(data[id_pile][1][id_date])[x:x+pat_size,y:y+pat_size] # Julien
                             im_channels=im0
@@ -256,7 +257,7 @@ class denoiser(object):
 
                     if self.load_all :
                         if self.copy_input:
-                            im0 = im0 = data[id_pile][1][ x:x + pat_size, y:y + pat_size, (id_date) % data[id_pile][1].shape[-1]] # Julien
+                            im0 = data[id_pile][1][ x:x + pat_size, y:y + pat_size, (id_date) % data[id_pile][1].shape[-1]] # Julien
                             im_channels=im0
                             # put twice the image in the batch
                             im_channels = np.expand_dims(im_channels, axis=2)
@@ -266,22 +267,20 @@ class denoiser(object):
                             indices_chosen = [id_date]
                             for date in range(self.input_c_dim) : # pour chaque pile # Julien
                                 # if we do not want consecutives dates
-                                if date == 0 : # Julien
-                                    im0 = im0 = data[id_pile][1][ x:x + pat_size, y:y + pat_size, (id_date) % data[id_pile][1].shape[-1]] # Julien
+                                '''if date == 0 : # Julien
+                                    im0 = data[id_pile][1][ x:x + pat_size, y:y + pat_size, (id_date) % data[id_pile][1].shape[-1]] # Julien
                                 else : # Julien
                                     new_idx = id_date # Julien
                                     while new_idx in indices_chosen : # Julien
                                         new_idx = random.randint(0, len(data[id_pile][1])-1) # Julien
-                                    im0 = im0 = data[id_pile][1][ x:x + pat_size, y:y + pat_size, (new_idx) % data[id_pile][1].shape[-1]] # Julien
-                                    indices_chosen.append(new_idx)
+                                    im0 = data[id_pile][1][ x:x + pat_size, y:y + pat_size, (new_idx) % data[id_pile][1].shape[-1]] # Julien
+                                    indices_chosen.append(new_idx)'''
                                 #if we want consecuitives dates
-                                # im0 = data[id_pile][1][ x:x + pat_size, y:y + pat_size, (id_date + date) % data[id_pile][1].shape[-1]] # image à l'indice id_data + 0 etc # Julien
+                                im0 = data[id_pile][1][ x:x + pat_size, y:y + pat_size, (id_date + date) % data[id_pile][1].shape[-1]] # image à l'indice id_data + 0 etc # Julien
                                 batch_images[i,:,:,date] = im0 # la date contient une image unique # Julien
-                    
 
                 _, loss,_= self.sess.run([self.train_op, self.loss, self.print_op],
                                          feed_dict={self.X_input: batch_images, self.lr: lr[epoch], self.is_training: True})
-
 
                 print("Epoch: [%2d] [%4d/%4d] time: %4.4f, loss: %.6f"
                       % (epoch + 1, (batch_id + 1) , numBatch, time.time() - start_time, loss)) 
@@ -353,6 +352,7 @@ class denoiser(object):
         test_data, test_files = load_sar_images(test_set, pile)
         for idx in range(len(test_files)):
             real_image = test_data[idx].astype(np.float32)
+            real_image = real_image[:,:256,:256,:]
             # real_image = load_sar_images(test_files[idx]).astype(np.float32)  
             stride = 32
             pat_size = 256
@@ -366,7 +366,6 @@ class denoiser(object):
             if im_h == pat_size:
                 x_range = list(np.array([0]))
             else:
-                print(im_h, pat_size)
                 x_range = list(range(0, im_h - pat_size, stride))
                 if (x_range[-1] + pat_size) < im_h: x_range.extend(range(im_h - pat_size, im_h - pat_size + 1))
 
@@ -387,6 +386,7 @@ class denoiser(object):
                     if not self.miso:
                         output_clean_image[:, x:x + pat_size, y:y + pat_size, 1:] += tmp_clean_image[:,:,:,1:] # alexis
                     count_image[:, x:x + pat_size, y:y + pat_size, :] += np.ones((1, pat_size, pat_size, 1)) # alexis
+            print(count_image.max())
             output_clean_image = output_clean_image / count_image
             noisyimage = denormalize_sar(real_image)
             outputimage = denormalize_sar(output_clean_image)
