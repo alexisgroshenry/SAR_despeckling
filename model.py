@@ -1,7 +1,7 @@
 import time
 import numpy as np
 import os
-import random 
+import random
 
 from utils import *
 from u_net import *
@@ -12,7 +12,7 @@ m = -1.429329123112601
 L = 1
 c = (1 / 2) * (special.psi(L) - np.log(L))
 cn = c / (M - m) 
-
+# test
 class denoiser(object):
     def __init__(self, sess, stride=128, input_c_dim=1, miso=True, copy_input=False, batch_size=4, load_all=True):
         
