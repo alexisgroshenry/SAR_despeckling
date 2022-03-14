@@ -11,11 +11,11 @@ M = 10.089038980848645
 m = -1.429329123112601
 L = 1
 c = (1 / 2) * (special.psi(L) - np.log(L))
-cn = c / (M - m) 
-# test
+cn = c / (M - m)
+
 class denoiser(object):
     def __init__(self, sess, stride=128, input_c_dim=1, miso=True, copy_input=False, batch_size=4, load_all=True):
-        
+
         self.sess = sess
         self.input_c_dim = input_c_dim
         self.miso = miso
@@ -27,7 +27,7 @@ class denoiser(object):
 
 
 
-        def true_fn(): 
+        def true_fn():
            s = tf.zeros(shape=tf.shape(self.X_input))
            for k in range(0, L):
                gamma = (tf.abs(tf.complex(tf.random_normal(shape=tf.shape(self.X_input), stddev=1),
@@ -36,7 +36,7 @@ class denoiser(object):
            s_amplitude = tf.sqrt(s / L)
            log_speckle = tf.log(s_amplitude)
            log_norm_speckle = log_speckle / (M - m)
-           
+
            return tf.add(self.X_input, log_norm_speckle)
 
         def false_fn():
@@ -352,7 +352,7 @@ class denoiser(object):
         test_data, test_files = load_sar_images(test_set, pile)
         for idx in range(len(test_files)):
             real_image = test_data[idx].astype(np.float32)
-            real_image = real_image[:,:256,:256,:]
+            # real_image = real_image[:,:256,:256,:]
             # real_image = load_sar_images(test_files[idx]).astype(np.float32)  
             stride = 32
             pat_size = 256
@@ -381,12 +381,11 @@ class denoiser(object):
                                                                  feed_dict={self.X_input: real_image[:, x:x + pat_size,
                                                                                      y:y + pat_size, :],
                                                                             self.is_training: False})
-                    output_clean_image[:, x:x + pat_size, y:y + pat_size, :] += tmp_clean_image # alexis
+                    output_clean_image[:, x:x + pat_size, y:y + pat_size, :] += tmp_clean_image
                     # complete the change maps with the reference denoised image
                     if not self.miso:
-                        output_clean_image[:, x:x + pat_size, y:y + pat_size, 1:] += tmp_clean_image[:,:,:,1:] # alexis
-                    count_image[:, x:x + pat_size, y:y + pat_size, :] += np.ones((1, pat_size, pat_size, 1)) # alexis
-            print(count_image.max())
+                        output_clean_image[:, x:x + pat_size, y:y + pat_size, 1:] += tmp_clean_image[:,:,:,0][:,:,:,np.newaxis]
+                    count_image[:, x:x + pat_size, y:y + pat_size, :] += np.ones((1, pat_size, pat_size, 1))
             output_clean_image = output_clean_image / count_image
             noisyimage = denormalize_sar(real_image)
             outputimage = denormalize_sar(output_clean_image)
