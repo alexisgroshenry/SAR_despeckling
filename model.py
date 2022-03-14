@@ -233,7 +233,7 @@ class denoiser(object):
                     if not self.load_all :
                         print('what')
                         if self.copy_input:
-                            im0 = np.load(data[id_pile][1][id_date])[x:x+pat_size,y:y+pat_size] # Julien
+                            im0 = np.load(data[id_pile][1][id_date])[x:x+pat_size,y:y+pat_size]
                             im_channels=im0
                             # put twice the image in the batch
                             im_channels = np.expand_dims(im_channels, axis=2)
@@ -241,19 +241,19 @@ class denoiser(object):
                         else:
                             # Une image différente à chaque channel ~ date 
                             indices_chosen = [id_date]
-                            for date in range(self.input_c_dim) : # pour chaque pile # Julien
+                            for date in range(self.input_c_dim) : # pour chaque pile
                                 # if we do not want consecutives dates
-                                if date == 0 : # Julien
-                                    im0 = np.load(data[id_pile][1][id_date])[x:x+pat_size,y:y+pat_size] # Julien
-                                else : # Julien
-                                    new_idx = id_date # Julien
-                                    while new_idx in indices_chosen : # Julien
-                                        new_idx = random.randint(0, len(data[id_pile][1])-1) # Julien
-                                    im0 = np.load(data[id_pile][1][new_idx])[x:x+pat_size,y:y+pat_size] # Julien
+                                if date == 0 :
+                                    im0 = np.load(data[id_pile][1][id_date])[x:x+pat_size,y:y+pat_size]
+                                else :
+                                    new_idx = id_date
+                                    while new_idx in indices_chosen :
+                                        new_idx = random.randint(0, len(data[id_pile][1])-1)
+                                    im0 = np.load(data[id_pile][1][new_idx])[x:x+pat_size,y:y+pat_size]
                                     indices_chosen.append(new_idx)
                                 #if we want consecuitives dates
-                                # im0 = np.load(data[id_pile][1][(id_date+date) % len(data[id_pile][1])])[x:x+pat_size,y:y+pat_size] # Julien
-                                batch_images[i,:,:,date] = im0 # la date contient une image unique # Julien
+                                # im0 = np.load(data[id_pile][1][(id_date+date) % len(data[id_pile][1])])[x:x+pat_size,y:y+pat_size]
+                                batch_images[i,:,:,date] = im0 # la date contient une image unique
 
                     if self.load_all :
                         if self.copy_input:
@@ -277,7 +277,7 @@ class denoiser(object):
                                     indices_chosen.append(new_idx)'''
                                 #if we want consecuitives dates
                                 im0 = data[id_pile][1][ x:x + pat_size, y:y + pat_size, (id_date + date) % data[id_pile][1].shape[-1]] # image à l'indice id_data + 0 etc # Julien
-                                batch_images[i,:,:,date] = im0 # la date contient une image unique # Julien
+                                batch_images[i,:,:,date] = im0 # la date contient une image unique
 
                 _, loss,_= self.sess.run([self.train_op, self.loss, self.print_op],
                                          feed_dict={self.X_input: batch_images, self.lr: lr[epoch], self.is_training: True})
@@ -353,7 +353,7 @@ class denoiser(object):
         for idx in range(len(test_files)):
             real_image = test_data[idx].astype(np.float32)
             # real_image = real_image[:,:256,:256,:]
-            # real_image = load_sar_images(test_files[idx]).astype(np.float32)  
+
             stride = 32
             pat_size = 256
 
@@ -391,11 +391,11 @@ class denoiser(object):
             outputimage = denormalize_sar(output_clean_image)
 
             # handle the new format of test_files
-            for idx_p, file in enumerate(test_files[idx]): # alexis
+            for idx_p, file in enumerate(test_files[idx]):
                 if idx_p and self.miso:
                     break
-                imagename = file.replace(test_set, "") # alexis
-                save_sar_images(outputimage[:,:,idx_p], noisyimage[:,:,idx_p], imagename, save_dir) # alexis
+                imagename = file.replace(test_set, "")
+                save_sar_images(outputimage[:,:,idx_p], noisyimage[:,:,idx_p], imagename, save_dir)
 
 
         print("--- Done Testing ---")

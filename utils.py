@@ -64,27 +64,25 @@ def load_train_data(load_all=True):
             for i in range(len(test)):
                 im.append(test[i])
 
-            image = np.load(test[0]) # Julien
-            im_h = np.size(image,0) # Julien
-            im_w = np.size(image,1) # Julien
-            dataset_train.append((name_p, im,im_h,im_w)) # Julien
+            image = np.load(test[0])
+            im_h = np.size(image,0)
+            im_w = np.size(image,1)
+            dataset_train.append((name_p, im,im_h,im_w))
     real_data = np.array(dataset_train)
     return real_data
 
 
-def load_sar_images(datasetdir, pile, mode='default'): # alexis
+def load_sar_images(datasetdir, pile, mode='default'):
     """
         Mode :
             - default : only in the order (0-1 2-3 3-4 5-6)
             - reverse : the same as default plus the reversed one (0-1 1-0 2-3 3-2 etc)
             - all : only when pile is 2 : (0-1 0-2 0-3 0-4 etc...)
     """
-    # get the name of the piles for evaluation (files must follow name convention "pilename_blabla.npy") # alexis
-    filelist = glob(datasetdir+'*.npy') # alexis
-    name_pile = list(set([file.replace(datasetdir,'').split('_')[0] for file in filelist])) # alexis
-    # ATTETION A DECOMMENTER    
-    name_pile = ['lely', 'limagne', 'marais1','marais2','ramb'] 
-    name_pile.sort() # alexis
+    # get the name of the piles for evaluation (files must follow name convention "pilename_blabla.npy")
+    filelist = glob(datasetdir+'*.npy')
+    name_pile = list(set([file.replace(datasetdir,'').split('_')[0] for file in filelist]))
+    name_pile.sort()
     data = []
     eval_files = []
     for name_p in name_pile:
