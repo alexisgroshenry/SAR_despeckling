@@ -4,7 +4,7 @@ import shutil
 
 if __name__ == "__main__" :
     # Directory of the data
-    dir_name = "./GT_FULL"
+    dir_name = "./GT_full"
 
     # Type of split
     by_pile = False
