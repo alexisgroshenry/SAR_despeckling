@@ -34,6 +34,7 @@ parser.add_argument('--checkpoint_dir', dest='ckpt_dir', default="./checkpoint",
                     help='models are saved here')
 parser.add_argument('--sample_dir', dest='sample_dir', default="./sample", help='sample are saved here')
 parser.add_argument('--test_dir', dest='test_dir', default="./test/", help='test sample are saved here')
+parser.add_argument('--testing_config', dest='testing_config', default="default", help='How the testing subpiles are computed : default, reverse or all')
 
 
 parser.add_argument('--eval_set', dest='eval_set', default='./data/evaluation/', help='dataset for eval in training')
@@ -51,7 +52,7 @@ def denoiser_train(denoiser, lr):
 
 def denoiser_test(denoiser):
     test_files = glob(args.test_set + '*.npy')
-    denoiser.test(test_set=args.test_set, ckpt_dir=args.ckpt_dir, save_dir=args.test_dir, pile=args.pile)
+    denoiser.test(test_set=args.test_set, ckpt_dir=args.ckpt_dir, save_dir=args.test_dir, pile=args.pile, mode=args.testing_config)
 
 
 

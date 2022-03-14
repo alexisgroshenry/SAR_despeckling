@@ -342,14 +342,14 @@ class denoiser(object):
 
 
 
-    def test(self, test_set, ckpt_dir, save_dir, pile): 
+    def test(self, test_set, ckpt_dir, save_dir, pile, mode="default"): 
         tf.initialize_all_variables().run()
         load_model_status, global_step = self.load(ckpt_dir)
         assert load_model_status == True, '[!] Load weights FAILED...'
         print(" [*] Load weights SUCCESS...")
         print("[*] start testing...")
 
-        test_data, test_files = load_sar_images(test_set, pile)
+        test_data, test_files = load_sar_images(test_set, pile, mode=mode)
         for idx in range(len(test_files)):
             real_image = test_data[idx].astype(np.float32)
             # real_image = real_image[:,:256,:256,:]

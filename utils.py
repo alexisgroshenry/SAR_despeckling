@@ -72,24 +72,81 @@ def load_train_data(load_all=True):
     return real_data
 
 
-def load_sar_images(datasetdir, pile): # alexis
+def load_sar_images(datasetdir, pile, mode='default'): # alexis
+    """
+        Mode :
+            - default : only in the order (0-1 2-3 3-4 5-6)
+            - reverse : the same as default plus the reversed one (0-1 1-0 2-3 3-2 etc)
+            - all : only when pile is 2 : (0-1 0-2 0-3 0-4 etc...)
+    """
     # get the name of the piles for evaluation (files must follow name convention "pilename_blabla.npy") # alexis
     filelist = glob(datasetdir+'*.npy') # alexis
     name_pile = list(set([file.replace(datasetdir,'').split('_')[0] for file in filelist])) # alexis
+    # ATTETION A DECOMMENTER    
+    name_pile = ['lely', 'limagne', 'marais1','marais2','ramb'] 
     name_pile.sort() # alexis
     data = []
     eval_files = []
     for name_p in name_pile:
         files_p = glob(datasetdir+name_p+'*.npy')
         files_p.sort()
+        print("Pile : {} / Len : {}".format(name_p,len(files_p)))
         assert pile <= len(files_p), "Not enough images for the pile selected in {}".format(datasetdir+name_p)
         # for now we build a single pile # TO FIX --> consider all pile-uplets makes pile! combinations
-        eval_files.append(files_p[:pile]) # eval_files contains lists with all the files in a given pile 
         im_ref = np.load(files_p[0])
-        im = np.zeros((1,im_ref.shape[0], im_ref.shape[1], pile))
-        for i in range(pile):
-            im[0,:,:,i] = normalize_sar(np.load(files_p[i]))
-        data.append(im)
+        if mode == 'default' :
+            """
+                0-1 2-3 4-5 6-7 etc
+            """
+            for k in range(len(files_p) // pile) : # number of subpile we can find
+                im = np.zeros((1,im_ref.shape[0], im_ref.shape[1], pile))
+                for idx,i in enumerate(range(k*pile, k*pile +pile)):
+                    im[0,:,:,idx] = normalize_sar(np.load(files_p[i]))
+
+                # add the pile images and the list of files
+                data.append(im)
+                eval_files.append(files_p[k*pile:k*pile +pile]) # eval_files contains lists with all the files in a given pile 
+
+        elif mode == "reverse" :
+            """
+                0-1 1-0 2-3 3-2 etc
+            """
+            # normal pile
+            for k in range(len(files_p) // pile) : # number of subpile we can find
+                im = np.zeros((1,im_ref.shape[0], im_ref.shape[1], pile))
+                for idx,i in enumerate(range(k*pile, k*pile +pile)):
+                    im[0,:,:,idx] = normalize_sar(np.load(files_p[i]))
+
+                # add the pile images and the list of files
+                data.append(im)
+                eval_files.append(files_p[k*pile:k*pile +pile]) # eval_files contains lists with all the files in a given pile 
+            # reverse pile
+            for k in range(len(files_p) // pile) : # number of subpile we can find
+                im = np.zeros((1,im_ref.shape[0], im_ref.shape[1], pile))
+                for idx, i in enumerate(range(k*pile +pile-1 , k*pile -1,-1)):
+                    im[0,:,:,idx] = normalize_sar(np.load(files_p[i]))
+
+                # add the pile images and the list of files
+                data.append(im)
+                liste = files_p[k*pile:k*pile +pile].copy()
+                liste.reverse()
+                liste = [k.replace(os.path.basename(k), "reversed_"+ os.path.basename(k)) for k in liste]
+                eval_files.append(liste) # eval_files contains lists with all the files in a given pile 
+
+        elif mode == "all" :
+            """
+                0-1 0-2 0-3 0-4 0-5 0-6 etc
+            """
+            assert pile == 2, "Mode all not implemented for pile != 2 and you used pile = {}".format(pile)
+            im = np.zeros((1,im_ref.shape[0], im_ref.shape[1], pile))
+            im[0,:,:,0] = normalize_sar(np.load(files_p[0]))
+            for idx in range(1,len(files_p)) :
+                im[0,:,:,1] = normalize_sar(np.load(files_p[idx]))
+                data.append(im)
+                eval_files.append([files_p[0].replace(os.path.basename(files_p[0]), "all_{}_".format(idx) + os.path.basename(files_p[0])), files_p[idx]])
+
+        else :
+            assert 1==0, "Mode specified not found. You specified {} and only default, reverse and all are available.".format(mode)
     return data, eval_files
 
 
