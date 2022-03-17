@@ -88,7 +88,7 @@ def load_sar_images(datasetdir, pile, mode='default'):
     for name_p in name_pile:
         files_p = glob(datasetdir+name_p+'*.npy')
         files_p.sort()
-        print("Pile : {} / Len : {}".format(name_p,len(files_p)))
+        # print("Pile : {} / Len : {}".format(name_p,len(files_p)))
         assert pile <= len(files_p), "Not enough images for the pile selected in {}".format(datasetdir+name_p)
         # for now we build a single pile # TO FIX --> consider all pile-uplets makes pile! combinations
         im_ref = np.load(files_p[0])
@@ -140,7 +140,7 @@ def load_sar_images(datasetdir, pile, mode='default'):
             im[0,:,:,0] = normalize_sar(np.load(files_p[0]))
             for idx in range(1,len(files_p)) :
                 im[0,:,:,1] = normalize_sar(np.load(files_p[idx]))
-                data.append(im)
+                data.append(im.copy())
                 eval_files.append([files_p[0].replace(os.path.basename(files_p[0]), "all_{}_".format(idx) + os.path.basename(files_p[0])), files_p[idx]])
 
         else :
