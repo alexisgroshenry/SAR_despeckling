@@ -151,7 +151,7 @@ def load_sar_images(datasetdir, pile, mode='default'):
             for k in range(len(files_p)) : # number of subpile we can find
                 im = np.zeros((1,im_ref.shape[0], im_ref.shape[1], pile))
                 im[0,:,:,0] = normalize_sar(np.load(files_p[k]))
-                im[0,:,:,1] = np.random.normal(mean=0., std=1., size=im_ref.shape) # WGN or pure speckle?
+                im[0,:,:,1] = np.random.normal(0., 1., size=im_ref.shape) # WGN or pure speckle?
                 data.append(im)
                 eval_files.append([files_p[k], files_p[k][:-4] + '_noise' + files_p[k][-4:]])
 
