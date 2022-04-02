@@ -39,25 +39,24 @@ def BCrossEntropy(yHat, y):
 def load_train_data(load_all=True):
     
     datasetdir = './data/training/'
-    # get the name of the piles for training (files must follow name convention "pilename_blabla.npy") # alexis
-    filelist = glob(datasetdir+'*.npy') # alexis
-    name_pile = list(set([file.replace(datasetdir,'').split('_')[0] for file in filelist])) # alexis
-    name_pile.sort() # alexis
+    # get the name of the piles for training (files must follow name convention "pilename_blabla.npy") 
+    filelist = glob(datasetdir+'*.npy') 
+    name_pile = list(set([file.replace(datasetdir,'').split('_')[0] for file in filelist])) 
+    name_pile.sort() 
     #name_pile = ['lely1', 'lely2', 'lely3', 'limagne1', 'limagne2', 'marais12', 'marais13'
     #name_pile = ['lely1', 'marais12', 'marais13'] 
-    name_pile = ['lely', 'marais1']
+    # name_pile = ['lely', 'marais1']
     dataset_train = []
     for name_p in name_pile:
         test = glob(datasetdir+name_p+'*.npy')
         print(test)
         test.sort()
-        #Julien
         if load_all :
             im_0 = np.load(test[0])
             im = np.zeros((im_0.shape[0], im_0.shape[1], len(test)))
             for i in range(len(test)):
                 im[:,:,i] = normalize_sar(np.load(test[i]))
-            dataset_train.append((name_p, im)) # Julien
+            dataset_train.append((name_p, im))
 
         else :
             im = []
@@ -90,7 +89,7 @@ def load_sar_images(datasetdir, pile, mode='default'):
         files_p.sort()
         # print("Pile : {} / Len : {}".format(name_p,len(files_p)))
         assert pile <= len(files_p), "Not enough images for the pile selected in {}".format(datasetdir+name_p)
-        # for now we build a single pile # TO FIX --> consider all pile-uplets makes pile! combinations
+        # for now we build a single pile 
         im_ref = np.load(files_p[0])
         if mode == 'default' :
             """

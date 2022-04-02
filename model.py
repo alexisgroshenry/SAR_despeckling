@@ -50,7 +50,7 @@ class denoiser(object):
         self.alpha_noise = 1.
         self.alpha_chge_map = 1.
         # self.loss = self.alpha*((1.0 / batch_size) * tf.reduce_sum( tf.abs( self.X_input[:,:,:,:1] - self.Y)))
-        # sum of L1 losses between all images and the denoised image # alexis
+        # sum of L1 losses between all images and the denoised image
         self.loss = self.alpha_noise*(1.0 / batch_size) * tf.reduce_sum( tf.abs(self.X_input[:,:,:,:1] - self.Y[:,:,:,:1]))
 
         if self.Y.shape[3] > 1 :
@@ -114,14 +114,13 @@ class denoiser(object):
             # If the data is to be loaded at each batch
             for i in range(data.shape[0]):
                 count = 0
-                # img = np.load(data[i][1][0]) # data[i][1][:,:,0] # Julien
-                im_h = data[i][2] # np.size(img, 0) Julien
-                im_w = data[i][3] # np.size(img, 1) Julien
+                im_h = data[i][2] 
+                im_w = data[i][3] 
 
                 for x in range(0 + step, im_h - pat_size, stride):
                     for y in range(0 + step, im_w - pat_size, stride):
                         count += 1
-                numPatch_ += count* len(data[i][1]) #data[i][1].shape[-1] # Julien
+                numPatch_ += count* len(data[i][1])
 
             numPatch = int((numPatch_)/batch_size) * batch_size
             numBatch = int(numPatch / batch_size)
@@ -130,13 +129,10 @@ class denoiser(object):
             indexes = np.zeros((numPatch, 4+1+1), dtype=np.uint16) 
             count_ = np.zeros(data.shape[0], dtype=np.uint16)
             for i in range(data.shape[0]): 
-                # img = np.load(data[i][1][0]) # data[i][1][:,:,0] # Julien
-                im_h = data[i][2] # np.size(img, 0) Julien
-                im_w = data[i][3] # np.size(img, 1) Julien
-                """im_h = np.size(data[i][1][:,:,0], 0)
-                im_w = np.size(data[i][1][:,:,0], 1)"""
+                im_h = data[i][2] 
+                im_w = data[i][3]                
             
-                for id_pile in range(len(data[i][1])) : # data[i][1].shape[-1]): # Added
+                for id_pile in range(len(data[i][1])) : 
                     count_b = 0
                     for x in range(0 + step, im_h - pat_size, stride):
                         for y in range(0 + step, im_w - pat_size, stride):
@@ -149,14 +145,14 @@ class denoiser(object):
             # data already in data
             for i in range(data.shape[0]):
                 count = 0
-                img = data[i][1][:,:,0] # Julien
+                img = data[i][1][:,:,0] 
                 im_h = np.size(img, 0) 
                 im_w = np.size(img, 1)
 
                 for x in range(0 + step, im_h - pat_size, stride):
                     for y in range(0 + step, im_w - pat_size, stride):
                         count += 1
-                numPatch_ += count* data[i][1].shape[-1] # Julien
+                numPatch_ += count* data[i][1].shape[-1] 
 
             numPatch = int((numPatch_)/batch_size) * batch_size
             numBatch = int(numPatch / batch_size)
@@ -168,7 +164,7 @@ class denoiser(object):
                 im_h = np.size(data[i][1][:,:,0], 0)
                 im_w = np.size(data[i][1][:,:,0], 1)
             
-                for id_pile in range(data[i][1].shape[-1]): # Added
+                for id_pile in range(data[i][1].shape[-1]): 
                     count_b = 0
                     for x in range(0 + step, im_h - pat_size, stride):
                         for y in range(0 + step, im_w - pat_size, stride):
@@ -239,9 +235,9 @@ class denoiser(object):
                             im_channels = np.expand_dims(im_channels, axis=2)
                             batch_images[i,:,:,:] = im_channels
                         else:
-                            # Une image différente à chaque channel ~ date 
+                            # a different image at each ~ date 
                             indices_chosen = [id_date]
-                            for date in range(self.input_c_dim) : # pour chaque pile
+                            for date in range(self.input_c_dim) : # for each stack
                                 # if we do not want consecutives dates
                                 if date == 0 :
                                     im0 = np.load(data[id_pile][1][id_date])[x:x+pat_size,y:y+pat_size]
@@ -253,31 +249,31 @@ class denoiser(object):
                                     indices_chosen.append(new_idx)
                                 #if we want consecuitives dates
                                 # im0 = np.load(data[id_pile][1][(id_date+date) % len(data[id_pile][1])])[x:x+pat_size,y:y+pat_size]
-                                batch_images[i,:,:,date] = im0 # la date contient une image unique
+                                batch_images[i,:,:,date] = im0 # a date is a single image
 
                     if self.load_all :
                         if self.copy_input:
-                            im0 = data[id_pile][1][ x:x + pat_size, y:y + pat_size, (id_date) % data[id_pile][1].shape[-1]] # Julien
+                            im0 = data[id_pile][1][ x:x + pat_size, y:y + pat_size, (id_date) % data[id_pile][1].shape[-1]] 
                             im_channels=im0
                             # put twice the image in the batch
                             im_channels = np.expand_dims(im_channels, axis=2)
                             batch_images[i,:,:,:] = im_channels
                         else:
-                            # Une image différente à chaque channel ~ date 
+                            # a different image at each ~ date 
                             indices_chosen = [id_date]
-                            for date in range(self.input_c_dim) : # pour chaque pile # Julien
+                            for date in range(self.input_c_dim) : # pour chaque pile 
                                 # if we do not want consecutives dates
-                                '''if date == 0 : # Julien
-                                    im0 = data[id_pile][1][ x:x + pat_size, y:y + pat_size, (id_date) % data[id_pile][1].shape[-1]] # Julien
-                                else : # Julien
-                                    new_idx = id_date # Julien
-                                    while new_idx in indices_chosen : # Julien
-                                        new_idx = random.randint(0, len(data[id_pile][1])-1) # Julien
-                                    im0 = data[id_pile][1][ x:x + pat_size, y:y + pat_size, (new_idx) % data[id_pile][1].shape[-1]] # Julien
+                                '''if date == 0 : 
+                                    im0 = data[id_pile][1][ x:x + pat_size, y:y + pat_size, (id_date) % data[id_pile][1].shape[-1]] 
+                                else :
+                                    new_idx = id_date 
+                                    while new_idx in indices_chosen : 
+                                        new_idx = random.randint(0, len(data[id_pile][1])-1)
+                                    im0 = data[id_pile][1][ x:x + pat_size, y:y + pat_size, (new_idx) % data[id_pile][1].shape[-1]] 
                                     indices_chosen.append(new_idx)'''
                                 #if we want consecuitives dates
-                                im0 = data[id_pile][1][ x:x + pat_size, y:y + pat_size, (id_date + date) % data[id_pile][1].shape[-1]] # image à l'indice id_data + 0 etc # Julien
-                                batch_images[i,:,:,date] = im0 # la date contient une image unique
+                                im0 = data[id_pile][1][ x:x + pat_size, y:y + pat_size, (id_date + date) % data[id_pile][1].shape[-1]] # image at index id_data + 0 etc 
+                                batch_images[i,:,:,date] = im0 # a date is a single image
 
                 _, loss,_= self.sess.run([self.train_op, self.loss, self.print_op],
                                          feed_dict={self.X_input: batch_images, self.lr: lr[epoch], self.is_training: True})
